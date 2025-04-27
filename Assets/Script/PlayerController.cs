@@ -5,28 +5,31 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 5f;
-    public float rotationSpeed = 720f; // Derajat per detik
     public Rigidbody2D rb;
+    public Animator animator;
 
-    Vector2 moveDirection;
+    private Vector3 moveInput;
 
     void Update()
     {
-        float moveX = Input.GetAxisRaw("Horizontal");
-        float moveY = Input.GetAxisRaw("Vertical");
+        // Ambil input player
+        moveInput.x = Input.GetAxisRaw("Horizontal");
+        moveInput.y = Input.GetAxisRaw("Vertical");
+        transform.position += moveInput * moveSpeed * Time.deltaTime;
 
-        moveDirection = new Vector2(moveX, moveY).normalized;
-    }
-
-    void FixedUpdate()
-    {
-        rb.velocity = moveDirection * moveSpeed;
-
-        if (moveDirection != Vector2.zero)
+        // Kirim parameter ke Animator
+        if (moveInput != Vector3.zero)
         {
-            float targetAngle = Mathf.Atan2(moveDirection.y, moveDirection.x) * Mathf.Rad2Deg - 90f;
-            float angle = Mathf.LerpAngle(rb.rotation, targetAngle, rotationSpeed * Time.fixedDeltaTime / 360f);
-            rb.rotation = angle;
+            animator.SetBool("WalkRight", true);
+        }
+        else animator.SetBool("WalkRight", false);
+
+        if (moveInput == Vector3.left){
+            transform.rotation = Quaternion.Euler(0, 180, 0);
+        } else if (moveInput == Vector3.right){
+        transform.rotation = Quaternion.Euler(0, 0, 0);
         }
     }
+
 }
+
