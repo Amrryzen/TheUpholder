@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class npcDialog : ScriptableObject
+[CreateAssetMenu(fileName = "New NPC Dialog", menuName = "Dialogue/NPC Dialog")]
+public class NPCdialog : ScriptableObject
 {
     public string npcName;
     public Sprite npcPortrait;
