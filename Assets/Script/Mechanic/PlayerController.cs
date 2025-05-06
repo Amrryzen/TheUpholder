@@ -14,13 +14,14 @@ public class PlayerController : MonoBehaviour
     [Header("Interaction Settings")]
     public float interactionRange = 2f;
     public LayerMask interactableLayer;
-    public GameObject interactionUI;        // UI “Tekan F” di Canvas
+    public GameObject interactionUI;        // UI "Tekan F" di Canvas
     public Vector3 uiWorldOffset = new Vector3(0, 1.5f, 0);
 
 
     [Header("Components")]
     public Rigidbody2D rb;
     public Animator animator;
+    private SpriteRenderer spriteRenderer; // Added SpriteRenderer reference
 
     // Internal
     private Vector2 moveInput;
@@ -28,6 +29,7 @@ public class PlayerController : MonoBehaviour
     private bool isRunning;
     private Interacable currentTarget;
     private Transform currentTargetTransform;
+    private bool isFacingRight = true; // Track facing direction
 
     [Header("Photo Capture")]
     public FlashEffect flashEffect;
@@ -41,7 +43,17 @@ public class PlayerController : MonoBehaviour
         // Auto-assign jika belum di-drag di Inspector
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (animator == null) animator = GetComponent<Animator>();
+        // Get the SpriteRenderer component
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
         if (interactionUI != null) interactionUI.SetActive(false);
+
+        // Set interpolation for smoother movement
+        if (rb != null)
+        {
+            rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        }
     }
 
     void Update()
@@ -67,7 +79,6 @@ public class PlayerController : MonoBehaviour
         {
             CapturePhoto();
         }
-
     }
 
     void FixedUpdate()
@@ -94,11 +105,36 @@ public class PlayerController : MonoBehaviour
         // Set parameter animasi (sesuaikan nama di Animator)
         animator.SetBool("WalkRight", moveInput != Vector2.zero);
 
-        // Flip sprite di sumbu Y agar menghadap kiri/kanan
-        if (moveInput.x < -0.1f)
-            transform.rotation = Quaternion.Euler(0, 180, 0);
-        else if (moveInput.x > 0.1f)
-            transform.rotation = Quaternion.Euler(0, 0, 0);
+        // OPTION 1: Using SpriteRenderer.flipX (if you have a SpriteRenderer)
+        if (spriteRenderer != null)
+        {
+            // Only flip when there's significant horizontal movement
+            if (moveInput.x < -0.1f && isFacingRight)
+            {
+                isFacingRight = false;
+                spriteRenderer.flipX = true;
+            }
+            else if (moveInput.x > 0.1f && !isFacingRight)
+            {
+                isFacingRight = true;
+                spriteRenderer.flipX = false;
+            }
+        }
+        // OPTION 2: Using rotation (if your character is more complex)
+        else
+        {
+            // Only change rotation when direction actually changes
+            if (moveInput.x < -0.1f && isFacingRight)
+            {
+                isFacingRight = false;
+                transform.rotation = Quaternion.Euler(0, 180, 0);
+            }
+            else if (moveInput.x > 0.1f && !isFacingRight)
+            {
+                isFacingRight = true;
+                transform.rotation = Quaternion.Euler(0, 0, 0);
+            }
+        }
     }
 
     private void CheckForInteractable()
@@ -142,10 +178,9 @@ public class PlayerController : MonoBehaviour
     }
 
     private void CapturePhoto()
-{
-    if (flashEffect != null) flashEffect.PlayFlash();
-    if (shutterSound != null) shutterSound.Play();
-    if (photoUI != null) photoUI.ShowPhoto();
-}
-
+    {
+        if (flashEffect != null) flashEffect.PlayFlash();
+        if (shutterSound != null) shutterSound.Play();
+        if (photoUI != null) photoUI.ShowPhoto();
+    }
 }
