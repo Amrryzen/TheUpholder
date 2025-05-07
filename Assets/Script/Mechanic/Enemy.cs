@@ -27,26 +27,26 @@ public class Enemy : MonoBehaviour
     public Animator animator;
     public SpriteRenderer spriteRenderer;
 
-    // Internal variables
+    // variabel Internal
     [HideInInspector] public Transform player;
     [HideInInspector] public int currentPatrolIndex = 0;
     [HideInInspector] public bool isWaiting = false;
 
-    // State Machine
+    // SM
     private EnemyStateMachine stateMachine;
 
     private void Awake()
     {
-        // Find the player
+        // cari player
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
-        // Initialize the state machine and states
+        // inisiasi SM, membuat EnemySM
         stateMachine = new EnemyStateMachine();
     }
 
     private void Start()
     {
-        // Start with patrol state
+        // mulai PatrolState
         stateMachine.Initialize(new EnemyStatePatrol(this, stateMachine));
     }
 
@@ -62,7 +62,7 @@ public class Enemy : MonoBehaviour
             stateMachine.CurrentState.FixedUpdate();
     }
 
-    // Helper method to check if player is in range
+    // methode bantu untuk mengetahui range player
     public bool IsPlayerInRange(float range)
     {
         if (player == null) return false;
@@ -70,7 +70,7 @@ public class Enemy : MonoBehaviour
         return Vector2.Distance(transform.position, player.position) < range;
     }
 
-    // Helper method to flip the sprite based on movement direction
+    // methode bantu untuk flipping
     public void FlipSpriteBasedOnDirection(Vector2 direction)
     {
         if (direction.x != 0 && spriteRenderer != null)
@@ -79,48 +79,48 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    // Draw debug visualization in the editor
+    // Debug Visual
     private void OnDrawGizmos()
     {
-        // Show detection range
+        // Mengetahui detection range
         if (showDetectionRange)
         {
             Gizmos.color = detectionRangeColor;
             Gizmos.DrawWireSphere(transform.position, detectionRange);
-            // Fill with semi-transparent color
+            // semi transparan
             Gizmos.color = new Color(detectionRangeColor.r, detectionRangeColor.g, detectionRangeColor.b, 0.1f);
             Gizmos.DrawSphere(transform.position, detectionRange);
         }
 
-        // Show attack range
+        // Mengetahui attack range
         if (showAttackRange)
         {
             Gizmos.color = attackRangeColor;
             Gizmos.DrawWireSphere(transform.position, attackRange);
-            // Fill with semi-transparent color
+            // semi transparan
             Gizmos.color = new Color(attackRangeColor.r, attackRangeColor.g, attackRangeColor.b, 0.2f);
             Gizmos.DrawSphere(transform.position, attackRange);
         }
 
-        // Show patrol path
+        // patrol path
         if (showPatrolPath && patrolPoints != null && patrolPoints.Length > 0)
         {
             Gizmos.color = patrolPathColor;
 
-            // Draw lines between patrol points
+            // gambar arah patrol
             for (int i = 0; i < patrolPoints.Length; i++)
             {
                 if (patrolPoints[i] != null)
                 {
-                    // Draw a sphere at each patrol point
+                    // gambar range pada patrol point
                     Gizmos.DrawSphere(patrolPoints[i].position, 0.2f);
 
-                    // Draw line to next patrol point
+                    // gambar range pada patrol point berikutnya
                     if (i < patrolPoints.Length - 1 && patrolPoints[i + 1] != null)
                     {
                         Gizmos.DrawLine(patrolPoints[i].position, patrolPoints[i + 1].position);
                     }
-                    // Connect last point to first to complete the loop
+                    // sambungkan keduanya
                     else if (i == patrolPoints.Length - 1 && patrolPoints[0] != null)
                     {
                         Gizmos.DrawLine(patrolPoints[i].position, patrolPoints[0].position);
@@ -128,7 +128,7 @@ public class Enemy : MonoBehaviour
                 }
             }
 
-            // If we're in play mode, highlight the current patrol target
+            // play mode, highlight patrol point
             if (Application.isPlaying && currentPatrolIndex < patrolPoints.Length && patrolPoints[currentPatrolIndex] != null)
             {
                 Gizmos.color = Color.white;
@@ -137,7 +137,7 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    // This version will only run when the object is selected in the editor
+    // selected show
     private void OnDrawGizmosSelected()
     {
         // Show current state name

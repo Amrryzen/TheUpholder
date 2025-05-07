@@ -10,7 +10,7 @@ public class EnemyStateChase : EnemyState
     {
         Debug.Log("Entered Chase State");
 
-        // Set animation if needed
+        // animasi
         if (enemy.animator != null)
         {
             enemy.animator.SetBool("IsWalking", false);
@@ -21,14 +21,14 @@ public class EnemyStateChase : EnemyState
 
     public override void Update()
     {
-        // If player is out of detection range, go back to patrol
+        // out of detection range, kembali patrol
         if (!enemy.IsPlayerInRange(enemy.detectionRange * 1.2f)) // Give a bit of extra range before giving up
         {
             stateMachine.ChangeState(new EnemyStatePatrol(enemy, stateMachine));
             return;
         }
 
-        // If player is in attack range, switch to attack state
+        // attact range, akan melakukan state attack
         if (enemy.IsPlayerInRange(enemy.attackRange))
         {
             stateMachine.ChangeState(new EnemyStateAttack(enemy, stateMachine));
@@ -40,11 +40,11 @@ public class EnemyStateChase : EnemyState
     {
         if (enemy.player != null)
         {
-            // Move towards the player
+            // pergi ke arah player
             Vector2 direction = (enemy.player.position - enemy.transform.position).normalized;
             enemy.transform.position += (Vector3)direction * enemy.chaseSpeed * Time.fixedDeltaTime;
 
-            // Flip sprite based on movement direction
+            // flip enemy
             enemy.FlipSpriteBasedOnDirection(direction);
         }
     }
