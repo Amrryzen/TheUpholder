@@ -12,7 +12,7 @@ public class PlayerController : MonoBehaviour
     public KeyCode runKey = KeyCode.LeftShift;
 
     [Header("Interaction Settings")]
-    public float interactionRange = 2f;
+    public float interactionRange = 0f;
     public LayerMask interactableLayer;
     public GameObject interactionUI;        // UI "Tekan F" di Canvas
     public Vector3 uiWorldOffset = new Vector3(0, 1.5f, 0);

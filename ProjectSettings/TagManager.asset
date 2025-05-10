@@ -13,7 +13,7 @@ TagManager:
   - Water
   - UI
   - PhotoTarget
-  - 
+  - WallTop
   - 
   - 
   - 
@@ -41,4 +41,10 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Character&Lights
+    uniqueID: 2005741273
+    locked: 0
+  - name: Walltop
+    uniqueID: 1077339241
     locked: 0

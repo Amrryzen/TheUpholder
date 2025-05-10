@@ -44,7 +44,7 @@ public class ModeManager : MonoBehaviour
     // Tombol Mode 1
     public void SelectMode1()
     {
-        selectedModeScene = "MahasiswaIdealistis"; // Ganti dengan nama scene sebenarnya
+        selectedModeScene = "OutsideKampus"; // Ganti dengan nama scene sebenarnya
         if (mode1Highlight != null)
             mode1Highlight.SetActive(true);
 

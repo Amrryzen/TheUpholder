@@ -12,12 +12,12 @@ EditorBuildSettings:
     path: Assets/Scenes/Lobby.unity
     guid: 5a94b1951ac8cbe419c336a935df5ba8
   - enabled: 1
-    path: Assets/Scenes/MahasiswaIdealistis.unity
+    path: Assets/Scenes/LantaiD.unity
     guid: 5fa94a99ea2d4114eb495e480006d7a6
   - enabled: 1
     path: Assets/Scenes/PenegakKebenaran.unity
-    guid: f3c6d5d62234e6843b52abd0a46ef91d
-  - enabled: 0
-    path: Assets/Scenes/MI-DalamKampus.unity
-    guid: 27ae442c583b3dd4cb4e2612bb210c4c
+    guid: 01290331412d1854ca52ead1cb23201b
+  - enabled: 1
+    path: Assets/Scenes/Lantai1.unity
+    guid: 69eb931cd46f7d449814be9beab8c291
   m_configObjects: {}
