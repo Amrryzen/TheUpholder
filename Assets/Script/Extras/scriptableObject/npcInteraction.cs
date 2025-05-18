@@ -30,6 +30,11 @@ public class npcInteraction : MonoBehaviour, Interacable
 
     public void Interact()
     {
+        if (!QuestManager.Instance.IsQuestActive(questToGiveID))
+        {
+            QuestManager.Instance.StartQuest(questToGiveID);
+            // Tampilkan UI dialog/konfirmasi
+        }
         if (dialogData == null || (PauseController.IsGamePaused && !isDialogActive))
             return;
 

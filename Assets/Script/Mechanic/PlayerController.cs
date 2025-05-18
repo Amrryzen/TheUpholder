@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;         // Untuk Slider
 using TMPro;
 
 public class PlayerController : MonoBehaviour
@@ -17,11 +18,24 @@ public class PlayerController : MonoBehaviour
     public GameObject interactionUI;        // UI "Tekan F" di Canvas
     public Vector3 uiWorldOffset = new Vector3(0, 1.5f, 0);
 
-
     [Header("Components")]
     public Rigidbody2D rb;
     public Animator animator;
-    private SpriteRenderer spriteRenderer; // Added SpriteRenderer reference
+    private SpriteRenderer spriteRenderer;
+
+    [Header("Photo Capture")]
+    public FlashEffect flashEffect;
+    public string photoQuestID = "photoQuest1";
+    public PhotoUI photoUI;
+    public AudioSource shutterSound;
+    public KeyCode captureKey = KeyCode.Space;
+
+    [Header("Flashlight Settings")]
+    public Flashlight flashlight;      // Drag GameObject berisi komponen Flashlight
+    public Image batteryImage;        // Drag UI Slider
+    public float maxBattery = 100f;
+    public float batteryDrainRate = 5f;
+    public float rechargeDelay = 3f;
 
     // Internal
     private Vector2 moveInput;
@@ -29,45 +43,32 @@ public class PlayerController : MonoBehaviour
     private bool isRunning;
     private Interacable currentTarget;
     private Transform currentTargetTransform;
-    private bool isFacingRight = true; // Track facing direction
-
-    [Header("Photo Capture")]
-    public FlashEffect flashEffect;
-    public PhotoUI photoUI;
-    public AudioSource shutterSound;
-    public KeyCode captureKey = KeyCode.Space;
-
+    private bool isFacingRight = true;
+    private float currentBattery;
+    private bool isRecharging = false;
 
     void Start()
     {
-        // Auto-assign jika belum di-drag di Inspector
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (animator == null) animator = GetComponent<Animator>();
-        // Get the SpriteRenderer component
         spriteRenderer = GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
         if (interactionUI != null) interactionUI.SetActive(false);
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-        // Set interpolation for smoother movement
-        if (rb != null)
-        {
-            rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-        }
+        // Inisialisasi baterai
+        currentBattery = maxBattery;
+        UpdateBatteryUI();
     }
 
     void Update()
     {
-        // Jangan lakukan apa-apa kalau game sedang di-pause
         if (PauseController.IsGamePaused) return;
 
         HandleMovementInput();
         HandleAnimationAndFlip();
 
-        // Cek NPC/objek interactable di sekitar
         CheckForInteractable();
-
-        // Kalau ada target, posisikan UI & cek input F
         if (currentTarget != null)
         {
             PositionUIAboveTarget();
@@ -76,25 +77,22 @@ public class PlayerController : MonoBehaviour
         }
 
         if (Input.GetKeyDown(captureKey))
-        {
             CapturePhoto();
-        }
+
+        HandleFlashlight();
     }
 
     void FixedUpdate()
     {
-        // Gerakkan Rigidbody
         rb.velocity = moveInput * currentSpeed;
     }
 
     private void HandleMovementInput()
     {
-        // Ambil input WASD / Arrow
         moveInput.x = Input.GetAxisRaw("Horizontal");
         moveInput.y = Input.GetAxisRaw("Vertical");
         moveInput = moveInput.normalized;
 
-        // Run jika shift + bergerak
         isRunning = Input.GetKey(runKey) && moveInput != Vector2.zero;
         float targetSpeed = isRunning ? runSpeed : walkSpeed;
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, acceleration * Time.deltaTime);
@@ -102,13 +100,10 @@ public class PlayerController : MonoBehaviour
 
     private void HandleAnimationAndFlip()
     {
-        // Set parameter animasi (sesuaikan nama di Animator)
         animator.SetBool("WalkRight", moveInput != Vector2.zero);
 
-        // OPTION 1: Using SpriteRenderer.flipX (if you have a SpriteRenderer)
         if (spriteRenderer != null)
         {
-            // Only flip when there's significant horizontal movement
             if (moveInput.x < -0.1f && isFacingRight)
             {
                 isFacingRight = false;
@@ -120,10 +115,8 @@ public class PlayerController : MonoBehaviour
                 spriteRenderer.flipX = false;
             }
         }
-        // OPTION 2: Using rotation (if your character is more complex)
         else
         {
-            // Only change rotation when direction actually changes
             if (moveInput.x < -0.1f && isFacingRight)
             {
                 isFacingRight = false;
@@ -139,7 +132,6 @@ public class PlayerController : MonoBehaviour
 
     private void CheckForInteractable()
     {
-        // Cari collider di radius
         Collider2D hit = Physics2D.OverlapCircle(transform.position, interactionRange, interactableLayer);
         if (hit != null)
         {
@@ -153,7 +145,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Tidak ada target valid
         currentTarget = null;
         currentTargetTransform = null;
         interactionUI.SetActive(false);
@@ -161,26 +152,71 @@ public class PlayerController : MonoBehaviour
 
     private void PositionUIAboveTarget()
     {
-        // Dapatkan world pos + offset
         Vector3 worldPos = currentTargetTransform.position + uiWorldOffset;
-        // Konversi ke layar (screen) pos
         Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPos);
-        // Set posisi RectTransform UI
         RectTransform rt = interactionUI.GetComponent<RectTransform>();
         rt.position = screenPos;
     }
 
-    private void OnDrawGizmosSelected()
-    {
-        // Visualisasi radius interaksi di Scene view
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, interactionRange);
-    }
-
     private void CapturePhoto()
     {
-        if (flashEffect != null) flashEffect.PlayFlash();
-        if (shutterSound != null) shutterSound.Play();
-        if (photoUI != null) photoUI.ShowPhoto();
+        // Hanya izinkan jika quest photo aktif
+        if (!QuestManager.Instance.IsQuestActive(photoQuestID))
+            return;
+
+        // Efek flash, suara shutter, dan UI
+        flashEffect?.PlayFlash();
+        shutterSound?.Play();
+        photoUI?.ShowPhoto();
+
+        // Publish event bagi quest objective
+        QuestManager.Instance.PublishEvent("OnPhotoCaptured", photoQuestID);
+    }
+
+
+   private void HandleFlashlight()
+    {
+        // Toggle flashlight dengan E (tidak memicu recharge)
+        if (Input.GetKeyDown(KeyCode.E) && flashlight != null)
+        {
+            bool turnOn = !flashlight.IsOn() && currentBattery > 0f;
+            flashlight.Toggle(turnOn);
+        }
+
+        // Drain baterai saat nyala
+        if (flashlight != null && flashlight.IsOn())
+        {
+            currentBattery -= batteryDrainRate * Time.deltaTime;
+            currentBattery = Mathf.Max(0f, currentBattery);
+            UpdateBatteryUI();
+
+            // Saat habis, matikan & mulai coroutine recharge
+            if (currentBattery <= 0f && !isRecharging)
+            {
+                flashlight.Toggle(false);
+                StartCoroutine(RechargeBatteryAfterDelay());
+            }
+        }
+    }
+
+    private IEnumerator RechargeBatteryAfterDelay()
+    {
+        isRecharging = true;
+        yield return new WaitForSeconds(rechargeDelay);
+
+        currentBattery = maxBattery;
+        UpdateBatteryUI();
+        isRecharging = false;
+    }
+
+    private void UpdateBatteryUI()
+    {
+        if (batteryImage != null)
+            batteryImage.fillAmount = currentBattery / maxBattery;
+    }
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, interactionRange);
     }
 }

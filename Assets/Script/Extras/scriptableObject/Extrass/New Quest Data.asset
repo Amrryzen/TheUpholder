@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f36779985a318bd4c8eee3ff80fd7393, type: 3}
+  m_Name: New Quest Data
+  m_EditorClassIdentifier: 
+  questID: 1
+  questTitle: Ambil 3 Gambar di Dalam Kampus!
+  description: Cari dan Potret 3 Anomali yang berada di dalam kampus
+  objectives:
+  - {fileID: 11400000, guid: 9c3eb35d50333d740bbe0f600dfb9611, type: 2}
