@@ -4,67 +4,54 @@ using TMPro;
 
 public class UIQuestTracker : MonoBehaviour
 {
-    [Header("UI references")]
-    public TextMeshProUGUI questText;
-    public GameObject questPanel;
+    [Header("UI References")]
+    public GameObject       questPanel;
+    public TextMeshProUGUI  questText;
 
-    private QuestManager2 questManager;
-
-    // cache agar tidak perlu mem‑set teks setiap frame
-    private string lastDisplayedText = "";
+    private QuestManager2   qm;
+    private string          lastText = "";
 
     private void Start()
     {
-        questManager = QuestManager2.Instance;
-
-        if (questManager == null)
+        qm = QuestManager2.Instance;
+        if (qm == null)
         {
-            Debug.LogError("QuestManager tidak ditemukan!");
+            Debug.LogError("QuestManager2 tidak ditemukan!");
             enabled = false;
             return;
         }
 
-        // tetap subscribe – kalau ada quest baru / selesai, teks langsung refresh
-        questManager.OnQuestActivated.AddListener(UpdateQuestDisplay);
-        questManager.OnQuestCompleted.AddListener(UpdateQuestDisplay);
+        // Subscribe ke semua event yang merubah progress
+        qm.OnQuestActivated.AddListener(_ => RefreshDisplay());
+        qm.OnQuestUpdated  .AddListener(_ => RefreshDisplay());
+        qm.OnQuestCompleted.AddListener(_ => RefreshDisplay());
 
-        UpdateQuestDisplay();
+        RefreshDisplay();
     }
 
     private void Update()
     {
-        // cek setiap frame untuk mendeteksi perubahan progres (mis. 1/3 → 2/3)
-        UpdateQuestDisplay();
+        // Cek juga tiap frame kalau progress berubah
+        RefreshDisplay();
     }
 
-    /// <summary>Refresh panel jika teks berubah.</summary>
-    private void UpdateQuestDisplay(Quest q = null)
+    private void RefreshDisplay()
     {
-        if (questManager == null) return;
+        List<string> lines = qm.GetActiveQuestDescriptions();
+        string combined = (lines.Count > 0) ? string.Join("\n\n", lines) : "";
 
-        List<string> lines = questManager.GetActiveQuestDescriptions(); // harus sudah mengandung progres
+        if (combined == lastText) return;
+        lastText = combined;
 
-        string combined = string.Join("\n\n", lines);
-
-        if (combined == lastDisplayedText) return;      // tidak berubah, abaikan
-
-        lastDisplayedText = combined;
-
-        if (lines.Count > 0)
-        {
-            questPanel.SetActive(true);
-            questText.text = combined;
-        }
-        else
-        {
-            questPanel.SetActive(false);
-        }
+        questPanel.SetActive(lines.Count > 0);
+        questText .text = combined;
     }
 
     private void OnDestroy()
     {
-        if (questManager == null) return;
-        questManager.OnQuestActivated.RemoveListener(UpdateQuestDisplay);
-        questManager.OnQuestCompleted.RemoveListener(UpdateQuestDisplay);
+        if (qm == null) return;
+        qm.OnQuestActivated .RemoveListener(_ => RefreshDisplay());
+        qm.OnQuestUpdated   .RemoveListener(_ => RefreshDisplay());
+        qm.OnQuestCompleted .RemoveListener(_ => RefreshDisplay());
     }
 }

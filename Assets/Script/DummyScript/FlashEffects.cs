@@ -1,42 +1,46 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal; // Untuk Light2D
 
+[RequireComponent(typeof(Light2D))]
 public class FlashEffects : MonoBehaviour
 {
+    [Header("Flash Settings")]
     public Light2D flashLight;
     public float flashDuration = 0.2f;
     public float maxIntensity = 1.0f;
 
-    public FlashEffects flashEffects;
+    [Header("Position Settings")]
+    public Transform playerTransform;    // Drag objek Player ke sini via Inspector
+    public Vector3 offset = Vector3.zero;
 
-    public Transform playerTransform; // Drag objek Player ke sini via Inspector
-    public Vector3 offset = Vector3.zero; // Jika ingin posisi flash tidak persis di tengah
-
-    private void Update()
+    private void Awake()
     {
-        if (playerTransform != null)
-        {
-            transform.position = playerTransform.position + offset;
-        }
+        // Jika belum assign di Inspector, ambil dari komponen GameObject ini
+        if (flashLight == null)
+            flashLight = GetComponent<Light2D>();
     }
-
-
 
     private void Start()
     {
-        if (flashLight == null)
-        {
-            flashLight = GetComponent<Light2D>();
-        }
-
+        // Pastikan light selalu aktif, tapi tidak menyala (= intensity 0)
         if (flashLight != null)
         {
-            flashLight.enabled = false;
+            flashLight.enabled = true;
+            flashLight.intensity = 0f;
         }
     }
 
+    private void Update()
+    {
+        // Ikuti posisi player
+        if (playerTransform != null)
+            transform.position = playerTransform.position + offset;
+    }
+
+    /// <summary>
+    /// Panggil ini saat player memotret
+    /// </summary>
     public void PlayFlash()
     {
         StopAllCoroutines();
@@ -45,27 +49,34 @@ public class FlashEffects : MonoBehaviour
 
     private IEnumerator FlashCoroutine()
     {
-        if (flashLight == null) yield break;
+        if (flashLight == null)
+            yield break;
 
-        flashLight.enabled = true;
+        // Tampilkan sekejap flash
         flashLight.intensity = maxIntensity;
 
         // Durasi tetap terang
         yield return new WaitForSeconds(flashDuration * 0.2f);
 
         // Fade out
-        float timer = 0;
+        float timer = 0f;
         float fadeDuration = flashDuration * 0.8f;
 
         while (timer < fadeDuration)
         {
             timer += Time.deltaTime;
-            float normalizedTime = timer / fadeDuration;
-            flashLight.intensity = Mathf.Lerp(maxIntensity, 0, normalizedTime);
+            float t = timer / fadeDuration;
+            flashLight.intensity = Mathf.Lerp(maxIntensity, 0f, t);
             yield return null;
         }
 
-        flashLight.enabled = false;
+        // Pastikan benar-benar mati dengan intensity = 0
+        flashLight.intensity = 0f;
     }
 
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, 0.5f);
+    }
 }

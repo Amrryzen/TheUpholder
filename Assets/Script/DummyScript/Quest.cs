@@ -1,66 +1,48 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
 public class Quest
 {
-    public string questId;
-    public string questName;
-    [TextArea(3, 5)]
-    public string description;
-    
-    // Status quest
-    public bool isActive;
-    public bool isCompleted;
-    
-    // Quest yang memerlukan fotografi
-    public bool requiresPhotography;
-    public int photosRequired;
-    public int photosTaken;
-    public string targetTag; // Tag objek yang perlu difoto
-    
-    // Constructor untuk quest fotografi
-    public Quest(string id, string name, string desc, bool requiresPhoto, int photoCount, string tag)
+    public string    questId;
+    public string    questName;
+    public string    description;
+    public QuestType questType;
+    public string[]  targetTags;      // ← multiple tags
+    public int       requiredCount;
+
+    [HideInInspector] public int  progress;
+    [HideInInspector] public bool isActive;
+    [HideInInspector] public bool isCompleted;
+
+    public Quest(QuestDefinition def)
     {
-        questId = id;
-        questName = name;
-        description = desc;
-        isActive = false;
-        isCompleted = false;
-        requiresPhotography = requiresPhoto;
-        photosRequired = photoCount;
-        photosTaken = 0;
-        targetTag = tag;
+        questId       = def.questId;
+        questName     = def.questName;
+        description   = def.description;
+        questType     = def.questType;
+        targetTags    = def.targetTags;
+        requiredCount = def.requiredCount;
+        progress      = 0;
+        isActive      = false;
+        isCompleted   = false;
     }
-    
-    // Menambahkan foto dan mengembalikan true jika semua foto telah diambil
-    public bool AddPhoto()
+
+    public void AddProgressForTag(string taggedObject)
     {
-        if (!requiresPhotography) return false;
-        
-        photosTaken++;
-        Debug.Log($"Foto {photosTaken}/{photosRequired} diambil untuk quest '{questName}'");
-        
-        return photosTaken >= photosRequired;
+        // hanya jika tag cocok salah satu targetTags
+        if (isCompleted) return;
+        if ( System.Array.IndexOf(targetTags, taggedObject) < 0 ) 
+            return;
+
+        progress = Mathf.Min(progress + 1, requiredCount);
+        if (progress >= requiredCount)
+            isCompleted = true;
+
+        Debug.Log($"[{questName}] Progress: {progress}/{requiredCount}");
     }
-    
-    // Reset progress foto
-    public void ResetPhotos()
+
+    public string GetDescriptionWithProgress()
     {
-        photosTaken = 0;
-    }
-    
-    // Mendapatkan progres dalam bentuk persentase
-    public float GetProgress()
-    {
-        if (isCompleted) return 1f;
-        
-        if (requiresPhotography)
-        {
-            return (float)photosTaken / photosRequired;
-        }
-        
-        return isActive ? 0.5f : 0f;
+        return $"{questName} ({progress}/{requiredCount})\n{description}";
     }
 }

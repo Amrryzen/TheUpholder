@@ -5,27 +5,23 @@ using UnityEngine;
 public class Flashlight2 : MonoBehaviour
 {
     [Header("Flashlight Settings")]
-    public GameObject flashlightObject;    // Child dengan Light2D atau SpotLight
-
+    public GameObject flashlightObject;  // Child yang punya Light2D, arah default ke kanan (0°)
     private bool isOn = false;
 
-    [Header("Flashlight Follow")]
+    [Header("Offset Settings")]
+    public float distanceFromPlayer = 0.3f; // jarak senter dari pusat player
+
     private Vector2 lastDirection = Vector2.right;
-    private SpriteRenderer spriteRenderer;
-    public Vector3 rightHandPosition = new Vector3(0.242f, -0.242f, 0);
-    public Vector3 leftHandPosition  = new Vector3(-0.242f, -0.242f, 0);
-    private bool isFacingRight = true;
 
     void Start()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
         if (flashlightObject != null)
             flashlightObject.SetActive(isOn);
     }
 
     void Update()
     {
-        UpdateFollowDirection();
+        UpdateDirection();
     }
 
     public void Toggle(bool state)
@@ -40,34 +36,25 @@ public class Flashlight2 : MonoBehaviour
         return isOn;
     }
 
-    private void UpdateFollowDirection()
+    private void UpdateDirection()
     {
+        // 1) Ambil input, jika ada simpan sebagai lastDirection
         Vector2 input = new Vector2(
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical")
         ).normalized;
 
         if (input != Vector2.zero)
-        {
             lastDirection = input;
 
-            if (Mathf.Abs(input.x) > 0.1f)
-            {
-                bool wasFacing = isFacingRight;
-                isFacingRight = input.x > 0;
-                if (wasFacing != isFacingRight)
-                    transform.localPosition = isFacingRight
-                        ? rightHandPosition
-                        : leftHandPosition;
-            }
+        if (flashlightObject == null)
+            return;
 
-            if (spriteRenderer != null)
-                spriteRenderer.flipY = !isFacingRight;
-        }
+        // 2) Geser child flashlightObject, bukan this.transform!
+        flashlightObject.transform.localPosition = (Vector3)(lastDirection * distanceFromPlayer);
 
+        // 3) Putar child agar beam menghadap arah yang benar
         float angle = Mathf.Atan2(lastDirection.y, lastDirection.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        flashlightObject.transform.localRotation = Quaternion.Euler(0f, 0f, angle);
     }
 }
-
-

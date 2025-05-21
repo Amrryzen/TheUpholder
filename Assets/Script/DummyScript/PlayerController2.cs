@@ -1,9 +1,9 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;         // Untuk Slider
+using UnityEngine.UI;                  // Untuk battery (Image)
 using TMPro;
-using UnityEngine.Rendering.Universal; // Untuk Light2D
+using UnityEngine.Rendering.Universal; // Untuk Light2D di flashEffect
+using UnityEngine.SceneManagement;     // Untuk LoadScene
 
 public class PlayerController2 : MonoBehaviour
 {
@@ -16,7 +16,7 @@ public class PlayerController2 : MonoBehaviour
     [Header("Interaction Settings")]
     public float interactionRange = 3f;
     public LayerMask interactableLayer;
-    public GameObject interactionUI;        // UI "Tekan F" di Canvas
+    public GameObject interactionUI;
     public Vector3 uiWorldOffset = new Vector3(0, 1.5f, 0);
 
     [Header("Components")]
@@ -26,82 +26,85 @@ public class PlayerController2 : MonoBehaviour
 
     [Header("Photo Capture")]
     public FlashEffects flashEffect;
-    public string photoQuestID = "photoQuest1";
-    public PhotoUI2 photoUI;
+    public PhotoUI2    photoUI;
     public AudioSource shutterSound;
-    public KeyCode captureKey = KeyCode.Space;
-    public float captureRange = 5f;        // Jarak kemampuan memotret
-    public LayerMask captureLayer;         // Layer objek yang bisa difoto
+    public KeyCode     captureKey = KeyCode.Space;
+    public float       captureRange = 5f;        
+    public LayerMask   captureLayer;             
 
     [Header("Flashlight Settings")]
-    public Flashlight2 flashlight;      // Drag GameObject berisi komponen Flashlight
-    public Image batteryImage;        // Drag UI Slider
-    public float maxBattery = 100f;
-    public float batteryDrainRate = 5f;
-    public float rechargeDelay = 3f;
+    public Flashlight2 flashlight;
+    public Image       batteryImage;
+    public float       maxBattery = 100f;
+    public float       batteryDrainRate = 5f;
+    public float       rechargeDelay = 3f;
 
-    // Internal
-    private Vector2 moveInput;
-    private float currentSpeed;
-    private bool isRunning;
+    [Header("Enemy Tags")]
+public string[] enemyTags;
+
+
+    [Header("Game Over UI")]
+    public GameObject  gameOverPanel;   // Drag panel “Game Over” di Inspector
+    public string      nextSceneName;   // Nama scene yang akan diload setelah Game Over
+
+    // internal
+    private Vector2    moveInput;
+    private float      currentSpeed;
+    private bool       isRunning;
     private Interacable currentTarget;
-    private Transform currentTargetTransform;
-    private bool isFacingRight = true;
-    private float currentBattery;
-    private bool isRecharging = false;
+    private Transform  currentTargetTransform;
+    private bool       isFacingRight = true;
+    private float      currentBattery;
+    private bool       isRecharging = false;
+
     private QuestManager2 questManager;
-    private float photoTimer = 0f;       // Cooldown timer untuk memotret
-    private float photoCooldown = 1f;    // Delay antara foto
+    private float         photoTimer = 0f;
+    private float         photoCooldown = 1f;
+
+    private bool isDead = false;
 
     void Start()
     {
-        if (rb == null) rb = GetComponent<Rigidbody2D>();
-        if (animator == null) animator = GetComponent<Animator>();
+        rb             = rb ?? GetComponent<Rigidbody2D>();
+        animator       = animator ?? GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
 
-        if (interactionUI != null) interactionUI.SetActive(false);
+        interactionUI?.SetActive(false);
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-        // Inisialisasi baterai
         currentBattery = maxBattery;
         UpdateBatteryUI();
-        
-        // Dapatkan referensi quest manager
+
         questManager = QuestManager2.Instance;
         if (questManager == null)
-        {
-            Debug.LogWarning("QuestManager tidak ditemukan! Pastikan objek QuestManager sudah ada di scene.");
-        }
+            Debug.LogWarning("QuestManager2 tidak ditemukan di scene!");
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
     }
 
     void Update()
     {
-        if (PauseController.IsGamePaused) return;
+        if (isDead || PauseController.IsGamePaused) 
+            return;
 
-        // Update timer foto
-        if (photoTimer > 0)
-        {
-            photoTimer -= Time.deltaTime;
-        }
+        // cooldown foto
+        if (photoTimer > 0f) photoTimer -= Time.deltaTime;
 
         HandleMovementInput();
         HandleAnimationAndFlip();
 
         CheckForInteractable();
-        if (currentTarget != null)
-        {
-            PositionUIAboveTarget();
-            if (Input.GetKeyDown(KeyCode.F))
-                currentTarget.Interact();
-        }
+        if (currentTarget != null && Input.GetKeyDown(KeyCode.F))
+            currentTarget.Interact();
 
-        // Hanya bisa memotret jika quest foto aktif dan cooldown selesai
-        if (Input.GetKeyDown(captureKey) && photoTimer <= 0)
+        // Capture photo
+        if (Input.GetKeyDown(captureKey) && photoTimer <= 0f)
         {
-            if (questManager != null && questManager.IsQuestActive(photoQuestID))
+            if (questManager != null && questManager.HasActivePhotoQuest())
             {
-                CapturePhoto();
-                photoTimer = photoCooldown; // Set cooldown
+                DoCapture();
+                photoTimer = photoCooldown;
             }
             else
             {
@@ -114,7 +117,8 @@ public class PlayerController2 : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (PauseController.IsGamePaused) return;
+        if (isDead || PauseController.IsGamePaused) 
+            return;
         rb.velocity = moveInput * currentSpeed;
     }
 
@@ -133,31 +137,24 @@ public class PlayerController2 : MonoBehaviour
     {
         animator.SetBool("WalkRight", moveInput != Vector2.zero);
 
+        if (moveInput.x < -0.1f && isFacingRight)
+            FlipPlayer(false);
+        else if (moveInput.x > 0.1f && !isFacingRight)
+            FlipPlayer(true);
+    }
+
+    private void FlipPlayer(bool faceRight)
+    {
+        isFacingRight = faceRight;
         if (spriteRenderer != null)
+            spriteRenderer.flipX = !isFacingRight;
+
+        // Jika FlashEffects perlu dibalik:
+        if (flashEffect != null)
         {
-            if (moveInput.x < -0.1f && isFacingRight)
-            {
-                isFacingRight = false;
-                spriteRenderer.flipX = true;
-            }
-            else if (moveInput.x > 0.1f && !isFacingRight)
-            {
-                isFacingRight = true;
-                spriteRenderer.flipX = false;
-            }
-        }
-        else
-        {
-            if (moveInput.x < -0.1f && isFacingRight)
-            {
-                isFacingRight = false;
-                transform.rotation = Quaternion.Euler(0, 180, 0);
-            }
-            else if (moveInput.x > 0.1f && !isFacingRight)
-            {
-                isFacingRight = true;
-                transform.rotation = Quaternion.Euler(0, 0, 0);
-            }
+            Vector3 scale = flashEffect.transform.localScale;
+            scale.x = isFacingRight ? Mathf.Abs(scale.x) : -Mathf.Abs(scale.x);
+            flashEffect.transform.localScale = scale;
         }
     }
 
@@ -166,104 +163,66 @@ public class PlayerController2 : MonoBehaviour
         Collider2D hit = Physics2D.OverlapCircle(transform.position, interactionRange, interactableLayer);
         if (hit != null)
         {
-            var interactable = hit.GetComponent<Interacable>();
-            if (interactable != null && interactable.canInteract())
+            var ia = hit.GetComponent<Interacable>();
+            if (ia != null && ia.canInteract())
             {
-                currentTarget = interactable;
+                currentTarget = ia;
                 currentTargetTransform = hit.transform;
                 interactionUI.SetActive(true);
+                PositionUIAboveTarget();
                 return;
             }
         }
 
         currentTarget = null;
-        currentTargetTransform = null;
         interactionUI.SetActive(false);
     }
 
     private void PositionUIAboveTarget()
     {
+        if (currentTargetTransform == null) return;
         Vector3 worldPos = currentTargetTransform.position + uiWorldOffset;
         Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPos);
-        RectTransform rt = interactionUI.GetComponent<RectTransform>();
-        rt.position = screenPos;
+        interactionUI.GetComponent<RectTransform>().position = screenPos;
     }
 
-    private void CapturePhoto()
+    private void DoCapture()
     {
-        // Hanya izinkan jika quest photo aktif
-        if (questManager == null || !questManager.IsQuestActive(photoQuestID))
-            return;
-
-        // Efek flash, suara shutter, dan UI
         flashEffect?.PlayFlash();
         shutterSound?.Play();
         photoUI?.ShowPhoto();
 
-        // Deteksi objek di sekitar dengan layer yang bisa difoto
-        DetectPhotoObjects();
-
-        // Publikasikan event untuk quest objective
-        questManager.PublishEvent("OnPhotoCaptured", photoQuestID);
-    }
-
-    private void DetectPhotoObjects()
-    {
-        // Deteksi objek di sekitar player
-        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, captureRange, captureLayer);
-        
-        bool photoProcessed = false;
-        
-        foreach (Collider2D collider in hitColliders)
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, captureRange, captureLayer);
+        bool any = false;
+        foreach (var c in hits)
         {
-            // Jika objek memiliki tag yang sesuai dengan quest
-            string objectTag = collider.tag;
-            Debug.Log($"Mendeteksi objek dengan tag: {objectTag}");
-            
-            // Proses foto pada quest manager
-            if (questManager != null)
-            {
-                questManager.ProcessPhoto(objectTag);
-                photoProcessed = true;
-            }
+            questManager.ProcessAction(c.tag);
+            any = true;
         }
-        
-        if (!photoProcessed)
-        {
-            Debug.Log("Tidak ada objek quest yang terdeteksi dalam foto.");
-        }
+        if (!any) Debug.Log("Tidak ada objek quest terdeteksi.");
     }
 
     private void HandleFlashlight()
     {
-        // Toggle flashlight dengan E (tidak memicu recharge)
-        if (Input.GetKeyDown(KeyCode.E) && flashlight != null)
-        {
-            bool turnOn = !flashlight.IsOn() && currentBattery > 0f;
-            flashlight.Toggle(turnOn);
-        }
+        if (Input.GetKeyDown(KeyCode.E) && flashlight != null && currentBattery > 0f)
+            flashlight.Toggle(!flashlight.IsOn());
 
-        // Drain baterai saat nyala
         if (flashlight != null && flashlight.IsOn())
         {
-            currentBattery -= batteryDrainRate * Time.deltaTime;
-            currentBattery = Mathf.Max(0f, currentBattery);
+            currentBattery = Mathf.Max(0f, currentBattery - batteryDrainRate * Time.deltaTime);
             UpdateBatteryUI();
-
-            // Saat habis, matikan & mulai coroutine recharge
             if (currentBattery <= 0f && !isRecharging)
             {
                 flashlight.Toggle(false);
-                StartCoroutine(RechargeBatteryAfterDelay());
+                StartCoroutine(RechargeBattery());
             }
         }
     }
 
-    private IEnumerator RechargeBatteryAfterDelay()
+    private IEnumerator RechargeBattery()
     {
         isRecharging = true;
         yield return new WaitForSeconds(rechargeDelay);
-
         currentBattery = maxBattery;
         UpdateBatteryUI();
         isRecharging = false;
@@ -274,14 +233,43 @@ public class PlayerController2 : MonoBehaviour
         if (batteryImage != null)
             batteryImage.fillAmount = currentBattery / maxBattery;
     }
-    
+
+    private void OnTriggerEnter2D(Collider2D other)
+{
+    if (isDead) return;
+
+    foreach (var tag in enemyTags)
+    {
+        if (other.CompareTag(tag))
+        {
+            // Player kalah
+            isDead = true;
+            StartCoroutine(GameOverRoutine());
+            break;
+        }
+    }
+}
+
+
+
+    private IEnumerator GameOverRoutine()
+    {
+        // Tampilkan panel Game Over
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(true);
+
+        // Tunggu 5 detik
+        yield return new WaitForSeconds(5f);
+
+        // Pindah scene
+        if (!string.IsNullOrEmpty(nextSceneName))
+            SceneManager.LoadScene(nextSceneName);
+    }
+
     private void OnDrawGizmosSelected()
     {
-        // Visualisasi jarak interaksi
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, interactionRange);
-        
-        // Visualisasi jarak foto
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(transform.position, captureRange);
     }
