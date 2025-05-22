@@ -27,14 +27,14 @@ public class EnemyStateAttack : EnemyState
 
     public override void Update()
     {
-        // If player is out of attack range, go back to chase
+        // out of range attack, kembali chase
         if (!enemy.IsPlayerInRange(enemy.attackRange))
         {
             stateMachine.ChangeState(new EnemyStateChase(enemy, stateMachine));
             return;
         }
 
-        // Attack logic with cooldown
+        // attact logic cooldown
         if (canAttack)
         {
             Attack();
@@ -55,7 +55,7 @@ public class EnemyStateAttack : EnemyState
     {
         Debug.Log("Enemy is attacking!");
 
-        // Trigger attack animation
+        // akan mentrigger attack
         if (enemy.animator != null)
         {
             enemy.animator.SetTrigger("Attack");
