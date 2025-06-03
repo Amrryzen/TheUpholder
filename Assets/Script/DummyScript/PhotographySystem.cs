@@ -8,7 +8,7 @@ public class PhotographySystem : MonoBehaviour
     [Header("Settings")]
     public KeyCode photographKey = KeyCode.Space;
     public float   cooldown       = 1f;
-    public float   cameraRange    = 5f;
+    public float   cameraRange    = 2f;
 
     [Header("Effects")]
     public GameObject cameraFlashPrefab;

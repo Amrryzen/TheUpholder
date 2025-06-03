@@ -52,9 +52,12 @@ public class PhotoUI2 : MonoBehaviour
         // display
         yield return new WaitForSeconds(displayDuration);
         // fade out
-        yield return Fade(1f, 0f, fadeOutDuration);
+          yield return Fade(1f, 0f, fadeOutDuration);
 
         photoPanel.SetActive(false);
+
+        // Tambah ke album
+        AlbumManager.Instance?.AddPhoto(tex);
     }
 
     private IEnumerator Fade(float from, float to, float duration)

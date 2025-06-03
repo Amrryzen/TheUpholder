@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;                  // Untuk battery (Image)
 using TMPro;
@@ -26,47 +27,47 @@ public class PlayerController2 : MonoBehaviour
 
     [Header("Photo Capture")]
     public FlashEffects flashEffect;
-    public PhotoUI2    photoUI;
+    public PhotoUI2 photoUI;
     public AudioSource shutterSound;
-    public KeyCode     captureKey = KeyCode.Space;
-    public float       captureRange = 5f;        
-    public LayerMask   captureLayer;             
+    public KeyCode captureKey = KeyCode.Space;
+    public float captureRange = 5f;
+    public LayerMask captureLayer;
 
     [Header("Flashlight Settings")]
     public Flashlight2 flashlight;
-    public Image       batteryImage;
-    public float       maxBattery = 100f;
-    public float       batteryDrainRate = 5f;
-    public float       rechargeDelay = 3f;
+    public Image batteryImage;
+    public float maxBattery = 100f;
+    public float batteryDrainRate = 5f;
+    public float rechargeDelay = 3f;
 
     [Header("Enemy Tags")]
-public string[] enemyTags;
-
+    public string[] enemyTags;
 
     [Header("Game Over UI")]
-    public GameObject  gameOverPanel;   // Drag panel “Game Over” di Inspector
-    public string      nextSceneName;   // Nama scene yang akan diload setelah Game Over
+    public GameObject gameOverPanel;
+    public string nextSceneName;
 
     // internal
-    private Vector2    moveInput;
-    private float      currentSpeed;
-    private bool       isRunning;
+    private Vector2 moveInput;
+    private float currentSpeed;
+    private bool isRunning;
     private Interacable currentTarget;
-    private Transform  currentTargetTransform;
-    private bool       isFacingRight = true;
-    private float      currentBattery;
-    private bool       isRecharging = false;
+    private Transform currentTargetTransform;
+    private bool isFacingRight = true;
+    private float currentBattery;
+    private bool isRecharging = false;
 
     private QuestManager2 questManager;
-    private float         photoTimer = 0f;
-    private float         photoCooldown = 1f;
+    private float photoTimer = 0f;
+    private float photoCooldown = 1f;
 
     private bool isDead = false;
+    private HashSet<string> capturedTags = new HashSet<string>();
 
     void Start()
     {
-        rb             = rb ?? GetComponent<Rigidbody2D>();
-        animator       = animator ?? GetComponent<Animator>();
+        rb = rb ?? GetComponent<Rigidbody2D>();
+        animator = animator ?? GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
 
         interactionUI?.SetActive(false);
@@ -85,11 +86,11 @@ public string[] enemyTags;
 
     void Update()
     {
-        if (isDead || PauseController.IsGamePaused) 
+        if (isDead || PauseController.Instance != null && PauseController.Instance.IsGamePaused())
             return;
 
-        // cooldown foto
-        if (photoTimer > 0f) photoTimer -= Time.deltaTime;
+        if (photoTimer > 0f)
+            photoTimer -= Time.deltaTime;
 
         HandleMovementInput();
         HandleAnimationAndFlip();
@@ -98,7 +99,6 @@ public string[] enemyTags;
         if (currentTarget != null && Input.GetKeyDown(KeyCode.F))
             currentTarget.Interact();
 
-        // Capture photo
         if (Input.GetKeyDown(captureKey) && photoTimer <= 0f)
         {
             if (questManager != null && questManager.HasActivePhotoQuest())
@@ -117,8 +117,9 @@ public string[] enemyTags;
 
     void FixedUpdate()
     {
-        if (isDead || PauseController.IsGamePaused) 
+        if (isDead || PauseController.Instance != null && PauseController.Instance.IsGamePaused())
             return;
+
         rb.velocity = moveInput * currentSpeed;
     }
 
@@ -149,7 +150,6 @@ public string[] enemyTags;
         if (spriteRenderer != null)
             spriteRenderer.flipX = !isFacingRight;
 
-        // Jika FlashEffects perlu dibalik:
         if (flashEffect != null)
         {
             Vector3 scale = flashEffect.transform.localScale;
@@ -194,12 +194,20 @@ public string[] enemyTags;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, captureRange, captureLayer);
         bool any = false;
+
         foreach (var c in hits)
         {
-            questManager.ProcessAction(c.tag);
-            any = true;
+            string tag = c.tag;
+            if (!capturedTags.Contains(tag))
+            {
+                questManager.ProcessAction(tag);
+                capturedTags.Add(tag);
+                any = true;
+            }
         }
-        if (!any) Debug.Log("Tidak ada objek quest terdeteksi.");
+
+        if (!any)
+            Debug.Log("Tidak ada objek quest terdeteksi atau semua sudah dipotret.");
     }
 
     private void HandleFlashlight()
@@ -211,6 +219,7 @@ public string[] enemyTags;
         {
             currentBattery = Mathf.Max(0f, currentBattery - batteryDrainRate * Time.deltaTime);
             UpdateBatteryUI();
+
             if (currentBattery <= 0f && !isRecharging)
             {
                 flashlight.Toggle(false);
@@ -235,33 +244,27 @@ public string[] enemyTags;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
-{
-    if (isDead) return;
-
-    foreach (var tag in enemyTags)
     {
-        if (other.CompareTag(tag))
+        if (isDead) return;
+
+        foreach (var tag in enemyTags)
         {
-            // Player kalah
-            isDead = true;
-            StartCoroutine(GameOverRoutine());
-            break;
+            if (other.CompareTag(tag))
+            {
+                isDead = true;
+                StartCoroutine(GameOverRoutine());
+                break;
+            }
         }
     }
-}
-
-
 
     private IEnumerator GameOverRoutine()
     {
-        // Tampilkan panel Game Over
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
 
-        // Tunggu 5 detik
         yield return new WaitForSeconds(5f);
 
-        // Pindah scene
         if (!string.IsNullOrEmpty(nextSceneName))
             SceneManager.LoadScene(nextSceneName);
     }

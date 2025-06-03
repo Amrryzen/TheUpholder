@@ -13,7 +13,6 @@ public class EnemyStatePatrol : EnemyState
         enemy.isWaiting = false;
         Debug.Log("Entered Patrol State");
 
-        // Set animation if needed
         if (enemy.animator != null)
         {
             enemy.animator.SetBool("IsWalking", true);
@@ -24,14 +23,12 @@ public class EnemyStatePatrol : EnemyState
 
     public override void Update()
     {
-        // Check if player is in detection range
         if (enemy.IsPlayerInRange(enemy.detectionRange))
         {
             stateMachine.ChangeState(new EnemyStateChase(enemy, stateMachine));
             return;
         }
 
-        // Handle waiting at patrol points
         if (enemy.isWaiting)
         {
             waitTimer += Time.deltaTime;
@@ -39,9 +36,9 @@ public class EnemyStatePatrol : EnemyState
             {
                 enemy.isWaiting = false;
                 waitTimer = 0f;
-
-                // Move to next patrol point
                 enemy.currentPatrolIndex = (enemy.currentPatrolIndex + 1) % enemy.patrolPoints.Length;
+                if (enemy.animator != null)
+                    enemy.animator.SetBool("IsWalking", true);
             }
         }
     }
@@ -50,26 +47,18 @@ public class EnemyStatePatrol : EnemyState
     {
         if (!enemy.isWaiting && enemy.patrolPoints.Length > 0)
         {
-            // Get current patrol point
             Transform target = enemy.patrolPoints[enemy.currentPatrolIndex];
-
-            // Move towards the patrol point
             Vector2 direction = (target.position - enemy.transform.position).normalized;
             enemy.transform.position += (Vector3)direction * enemy.moveSpeed * Time.fixedDeltaTime;
 
-            // Flip sprite based on movement direction
+            // **Flip** sprite di sini
             enemy.FlipSpriteBasedOnDirection(direction);
 
-            // Check if we've reached the patrol point
             if (Vector2.Distance(enemy.transform.position, target.position) < 0.1f)
             {
                 enemy.isWaiting = true;
-
-                // Update animation if needed
                 if (enemy.animator != null)
-                {
                     enemy.animator.SetBool("IsWalking", false);
-                }
             }
         }
     }
@@ -79,3 +68,4 @@ public class EnemyStatePatrol : EnemyState
         waitTimer = 0f;
     }
 }
+

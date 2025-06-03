@@ -10,7 +10,7 @@ public class PlayerHealth : MonoBehaviour
     
     [Header("References")]
     public Animator animator;
-    public PlayerController playerController; // Untuk disable gerak saat mati
+    public PlayerController2 playerController; // Untuk disable gerak saat mati
 
     private bool isDead = false;
 
@@ -23,7 +23,7 @@ public class PlayerHealth : MonoBehaviour
             animator = GetComponent<Animator>();
 
         if (playerController == null)
-            playerController = GetComponent<PlayerController>();
+            playerController = GetComponent<PlayerController2>();
     }
 
     public void TakeDamage(int damage)
