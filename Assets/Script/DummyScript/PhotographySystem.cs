@@ -74,12 +74,10 @@ public class PhotographySystem : MonoBehaviour
         Collider2D[] hits = Physics2D.OverlapCircleAll(cameraOrigin.position, cameraRange);
         bool any = false;
         foreach (var c in hits)
-        {
-            if (qm != null)
-                qm.ProcessAction(c.tag);
-            OnPhotoTaken.Invoke(c.tag);
-            any = true;
-        }
+{
+    OnPhotoTaken.Invoke(c.tag); // biarkan ini untuk efek/fungsi lain
+    any = true;
+}
         if (!any)
             Debug.Log("Tidak ada target quest terdeteksi.");
     }

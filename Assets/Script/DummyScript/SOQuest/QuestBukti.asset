@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 103b2f04178b473419ac7d31f1a4f9bd, type: 3}
+  m_Name: QuestBukti
+  m_EditorClassIdentifier: 
+  questId: 2
+  questName: Ambil 2 Barang Bukti
+  description: Eksplorasi dan ambil 2 barang bukti anomali yang ada di dalam kampus
+    ini!
+  questTypes: 2
+  targetTags:
+  - Ganja
+  - Sabu
+  requiredCount: 2

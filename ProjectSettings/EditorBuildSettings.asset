@@ -18,6 +18,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Lantai1.unity
     guid: 69eb931cd46f7d449814be9beab8c291
   - enabled: 1
-    path: Assets/Scenes/PenegakKebenaran.unity
+    path: Assets/Scenes/Street.unity
     guid: 01290331412d1854ca52ead1cb23201b
+  - enabled: 1
+    path: Assets/Scenes/Basement.unity
+    guid: b56b5cf97cc9d2c43b56cc84793772f5
   m_configObjects: {}

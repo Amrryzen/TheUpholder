@@ -13,12 +13,16 @@ public class PlayerController2 : MonoBehaviour
     public float runSpeed = 8f;
     public float acceleration = 10f;
     public KeyCode runKey = KeyCode.LeftShift;
+    private Collider2D nearbyCollectible;
+
 
     [Header("Interaction Settings")]
     public float interactionRange = 3f;
     public LayerMask interactableLayer;
     public GameObject interactionUI;
     public Vector3 uiWorldOffset = new Vector3(0, 1.5f, 0);
+    public GameObject collectUIIndicator;
+
 
     [Header("Components")]
     public Rigidbody2D rb;
@@ -43,6 +47,20 @@ public class PlayerController2 : MonoBehaviour
     [Header("Enemy Tags")]
     public string[] enemyTags;
 
+    [Header("Collectible Tags")]
+    public string[] collectibleTags;
+
+    [Header("Collectible UI Panels")]
+    public List<CollectiblePanelEntry> collectiblePanels = new List<CollectiblePanelEntry>();
+
+    [System.Serializable]
+    public class CollectiblePanelEntry
+    {
+        public string tag;
+        public GameObject panel;
+    }
+    private Dictionary<string, GameObject> tagToPanel = new Dictionary<string, GameObject>();
+
     [Header("Game Over UI")]
     public GameObject gameOverPanel;
     public string nextSceneName;
@@ -62,7 +80,9 @@ public class PlayerController2 : MonoBehaviour
     private float photoCooldown = 1f;
 
     private bool isDead = false;
-    private HashSet<string> capturedTags = new HashSet<string>();
+    private HashSet<string> photographedTags = new HashSet<string>();
+    private HashSet<string> collectedTags = new HashSet<string>();
+
 
     void Start()
     {
@@ -110,6 +130,18 @@ public class PlayerController2 : MonoBehaviour
             {
                 Debug.Log("Tidak ada quest fotografi yang aktif!");
             }
+        }
+
+        if (Input.GetKeyDown(KeyCode.C) && nearbyCollectible != null)
+        {
+            TryCollectItem(nearbyCollectible);
+        }
+
+
+        foreach (var entry in collectiblePanels)
+        {
+            if (!tagToPanel.ContainsKey(entry.tag) && entry.panel != null)
+                tagToPanel.Add(entry.tag, entry.panel);
         }
 
         HandleFlashlight();
@@ -198,10 +230,10 @@ public class PlayerController2 : MonoBehaviour
         foreach (var c in hits)
         {
             string tag = c.tag;
-            if (!capturedTags.Contains(tag))
+            if (!photographedTags.Contains(tag))
             {
                 questManager.ProcessAction(tag);
-                capturedTags.Add(tag);
+                photographedTags.Add(tag);
                 any = true;
             }
         }
@@ -247,16 +279,79 @@ public class PlayerController2 : MonoBehaviour
     {
         if (isDead) return;
 
+        foreach (var tag in collectibleTags)
+        {
+            if (other.CompareTag(tag))
+            {
+                nearbyCollectible = other;
+
+                if (collectUIIndicator != null)
+                    collectUIIndicator.SetActive(true);
+
+                return;
+            }
+        }
+
         foreach (var tag in enemyTags)
         {
             if (other.CompareTag(tag))
             {
                 isDead = true;
                 StartCoroutine(GameOverRoutine());
-                break;
+                return;
             }
         }
     }
+
+
+    private void TryCollectItem(Collider2D item)
+    {
+        string tag = item.tag;
+
+        if (!collectedTags.Contains(tag))
+        {
+            questManager?.ProcessAction(tag);
+            collectedTags.Add(tag);
+            Destroy(item.gameObject);
+            Debug.Log("Collected: " + tag);
+            // Tampilkan panel sesuai tag
+            if (tagToPanel.TryGetValue(tag, out GameObject panel))
+            {
+                panel.SetActive(true);
+
+                Animator animator = panel.GetComponent<Animator>();
+                if (animator != null)
+                {
+                    animator.SetTrigger("Pop");
+                }
+
+                // Optional: auto-hide panel setelah 3 detik
+                StartCoroutine(HidePanelAfterDelay(panel, 2f));
+            }
+
+            nearbyCollectible = null;
+        }
+    }
+    private IEnumerator HidePanelAfterDelay(GameObject panel, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        panel.SetActive(false);
+    }
+
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (nearbyCollectible == other)
+        {
+            nearbyCollectible = null;
+
+            if (collectUIIndicator != null)
+                collectUIIndicator.SetActive(false);
+        }
+    }
+
+
+
 
     private IEnumerator GameOverRoutine()
     {

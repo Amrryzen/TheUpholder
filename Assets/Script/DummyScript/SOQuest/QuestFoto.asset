@@ -15,7 +15,7 @@ MonoBehaviour:
   questId: 1
   questName: Foto 3 Anomali
   description: Eksplorasi dan ambil 3 gambar anomali yang ada di dalam kampus ini!
-  questType: 0
+  questTypes: 1
   targetTags:
   - Narkoba
   - Pembully

@@ -7,76 +7,92 @@ public class ModeManager : MonoBehaviour
     private string selectedModeScene = "";
 
     [Header("Highlight Indicator")]
+    [Tooltip("Objek UI yang akan diaktifkan untuk men‐highlight Mode 1 bila dipilih.")]
     public GameObject mode1Highlight;
+
+    [Tooltip("Objek UI yang akan diaktifkan untuk men‐highlight Mode 2 bila dipilih.")]
     public GameObject mode2Highlight;
 
     [Header("Start Button")]
+    [Tooltip("Tombol untuk memulai scene setelah mode dipilih.")]
     public Button startButton;
 
-    [Header("Mode Buttons")]
+    [Header("Mode 2 Button & Overlay")]
+    [Tooltip("Tombol UI untuk memilih Mode 2.")]
     public Button mode2Button;
-    public GameObject mode2LockedOverlay; // Gambar atau teks untuk tampilkan kunci di mode 2
 
-    void Start()
+    [Tooltip("Objek UI (misalnya gembok) yang tampilkan bahwa Mode 2 terkunci.")]
+    public GameObject mode2LockedOverlay;
+
+    [Header("Nama Scene untuk Setiap Mode")]
+    [Tooltip("Nama scene Mode 1 (misalnya \"Hall\").")]
+    public string sceneMode1 = "Hall";
+
+    [Tooltip("Nama scene Mode 2 (misalnya \"SceneMode2\").")]
+    public string sceneMode2 = "SceneMode2";
+
+    private void Start()
     {
-        // Cek apakah Mode 1 sudah diselesaikan sebelumnya
+        // 1) Cek apakah Mode 1 sudah selesai (PlayerPrefs["Mode1Completed"] == 1)
         bool mode1Completed = PlayerPrefs.GetInt("Mode1Completed", 0) == 1;
 
-        // Atur interaksi tombol mode 2 berdasarkan progres
+        // 2) Atur interaktif/tampilan Mode 2 sesuai progres
         if (mode2Button != null)
             mode2Button.interactable = mode1Completed;
 
         if (mode2LockedOverlay != null)
             mode2LockedOverlay.SetActive(!mode1Completed);
 
-        // Nonaktifkan tombol Start di awal
+        // 3) Nonaktifkan tombol Start di awal
         if (startButton != null)
             startButton.interactable = false;
 
-        // Nonaktifkan highlight di awal
+        // 4) Nonaktifkan highlight pada kedua mode di awal
         if (mode1Highlight != null)
             mode1Highlight.SetActive(false);
-
         if (mode2Highlight != null)
             mode2Highlight.SetActive(false);
     }
 
-    // Tombol Mode 1
+    /// <summary>
+    /// Dipanggil saat tombol atau UI Mode 1 diklik.
+    /// </summary>
     public void SelectMode1()
     {
-        selectedModeScene = "Hall"; // Ganti dengan nama scene sebenarnya
+        selectedModeScene = sceneMode1;
         if (mode1Highlight != null)
             mode1Highlight.SetActive(true);
-
         if (mode2Highlight != null)
             mode2Highlight.SetActive(false);
-
         if (startButton != null)
             startButton.interactable = true;
     }
 
-    // Tombol Mode 2
+    /// <summary>
+    /// Dipanggil saat tombol atau UI Mode 2 diklik.
+    /// Mode 2 hanya bisa dipilih kalau PlayerPrefs["Mode1Completed"] == 1.
+    /// </summary>
     public void SelectMode2()
     {
-        // Cek dulu apakah mode ini sudah terbuka
+        // Pastikan Mode 1 sudah selesai
         if (PlayerPrefs.GetInt("Mode1Completed", 0) != 1)
         {
             Debug.Log("Mode 2 masih terkunci!");
             return;
         }
 
-        selectedModeScene = "SceneMode2"; // Ganti dengan nama scene sebenarnya
+        selectedModeScene = sceneMode2;
         if (mode1Highlight != null)
             mode1Highlight.SetActive(false);
-
         if (mode2Highlight != null)
             mode2Highlight.SetActive(true);
-
         if (startButton != null)
             startButton.interactable = true;
     }
 
-    // Tombol Start
+    /// <summary>
+    /// Dipanggil saat tombol Start diklik; akan memuat scene yang sudah di‐set di selectedModeScene.
+    /// </summary>
     public void StartGame()
     {
         if (!string.IsNullOrEmpty(selectedModeScene))
@@ -89,11 +105,13 @@ public class ModeManager : MonoBehaviour
         }
     }
 
-    // 🔁 Untuk testing: reset progress (bisa panggil lewat tombol UI sementara)
+    /// <summary>
+    /// Kalau perlu, panggil fungsi ini untuk reset progress Mode 1 (misalnya lewat tombol debug).
+    /// </summary>
     public void ResetProgress()
     {
         PlayerPrefs.DeleteKey("Mode1Completed");
         PlayerPrefs.Save();
-        Debug.Log("Progress berhasil di-reset!");
+        Debug.Log("Progress Mode 1 berhasil di-reset!");
     }
 }

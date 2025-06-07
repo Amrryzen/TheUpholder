@@ -10,13 +10,6 @@ public abstract class QuestObjective : ScriptableObject
 
     public bool IsComplete { get; protected set; } = false;
 
-    /// <summary>
-    /// Subscribe listener ke QuestManager Events
-    /// </summary>
     public abstract void Initialize(QuestManager manager);
-
-    /// <summary>
-    /// Unsubscribe listener
-    /// </summary>
     public abstract void Cleanup(QuestManager manager);
 }

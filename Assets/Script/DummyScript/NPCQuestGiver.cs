@@ -1,34 +1,45 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
+using UnityEngine.Rendering.Universal; // Jika masih pakai Light2D
+using UnityEngine.SceneManagement;
 
 public class NPCQuestGiver : MonoBehaviour, Interacable
 {
     [Header("Quest Data")]
     public QuestDefinition questDef;
 
+    [Header("Collectibles To Activate")]
+    public GameObject[] collectiblesToActivate;
+
     [Header("Dialog Lines")]
-    [TextArea(2,4)] public string[] introDialogLines;
-    [TextArea(2,4)] public string[] postCompletionDialogLines;
+    [TextArea(2, 4)] public string[] introDialogLines;
+    [TextArea(2, 4)] public string[] postCompletionDialogLines;
 
     [Header("UI & SFX")]
-    public GameObject       dialogPanel;
-    public TextMeshProUGUI  dialogText;
-    public GameObject       nextPanel;
-    public GameObject       rewardImage;
-    public AudioSource      audioSource;
-    public AudioClip        dialogSFX;
-    public AudioClip        rewardSFX;
-    public float            typingSpeed       = 0.02f;
-    public float            delayBetweenLines = 1f;
+    public GameObject dialogPanel;
+    public TextMeshProUGUI dialogText;
+    public GameObject nextPanel;
+    public GameObject rewardImage;
+    public AudioSource audioSource;
+    public AudioClip dialogSFX;
+    public AudioClip rewardSFX;
+    public float typingSpeed = 0.02f;
+    public float delayBetweenLines = 1f;
 
     [Header("Fade Out After Completion")]
     public float fadeOutDuration = 1f; // durasi fade
-    public bool  destroyAfterFade = true;
+    public bool destroyAfterFade = true;
+
+    [Header("Nama Scene Menu Pilih Mode (untuk Unlock)")]
+    public string menuSceneName = "StorySelectScene";
 
     private bool hasGivenQuest = false;
-    private bool isTyping      = false;
+    private bool isTyping = false;
+
+    private StoryUnlockManager unlockManager;
 
     private void Awake()
     {
@@ -38,9 +49,14 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
 
     private void Start()
     {
-        if (dialogPanel  != null) dialogPanel .SetActive(false);
-        if (nextPanel    != null) nextPanel   .SetActive(false);
-        if (rewardImage  != null) rewardImage .SetActive(false);
+        // Cari instance StoryUnlockManager di scene
+        unlockManager = FindObjectOfType<StoryUnlockManager>();
+        if (unlockManager == null)
+            Debug.LogWarning("NPCQuestGiver: tidak menemukan StoryUnlockManager di scene!");
+
+        if (dialogPanel != null) dialogPanel.SetActive(false);
+        if (nextPanel != null) nextPanel.SetActive(false);
+        if (rewardImage != null) rewardImage.SetActive(false);
     }
 
     public bool canInteract() => true;
@@ -48,27 +64,39 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
     public void Interact()
     {
         if (isTyping) return;
+
         if (!hasGivenQuest)
         {
-            // Give quest
+            // Beri quest
             StartCoroutine(PlayDialogSequence(introDialogLines, () =>
             {
                 QuestManager2.Instance.ActivateQuest(questDef);
                 hasGivenQuest = true;
+                foreach (var obj in collectiblesToActivate)
+                {
+                    if (obj != null)
+                        obj.SetActive(true);
+                }
+
                 if (nextPanel) nextPanel.SetActive(true);
             }));
         }
         else
         {
-            // Check completion
+            // Cek completion
             Quest q = QuestManager2.Instance.GetActiveQuest(questDef.questId);
             if (q != null && q.isCompleted)
             {
                 StartCoroutine(PlayDialogSequence(postCompletionDialogLines, () =>
                 {
-                    // Complete quest
+                    // 1) Invoke event OnQuestCompleted
                     QuestManager2.Instance.OnQuestCompleted.Invoke(q);
-                    // Show reward, then fade out NPC
+
+                    // 2) Setelah panel dialog post‐completion selesai, panggil LoadMenu
+                    if (unlockManager != null)
+                        unlockManager.LoadMenuScene(menuSceneName);
+
+                    // 3) Tampilkan reward, lalu fade out NPC
                     StartCoroutine(ShowRewardAndFadeOut());
                 }));
             }
@@ -77,7 +105,7 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
 
     private IEnumerator ShowRewardAndFadeOut()
     {
-        // 1) show reward image
+        // 1) tampilkan reward image
         if (rewardImage != null)
         {
             rewardImage.SetActive(true);
@@ -86,43 +114,36 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
             yield return new WaitForSecondsRealtime(delayBetweenLines);
             rewardImage.SetActive(false);
         }
-        // 2) fade out self
+        // 2) fade out
         yield return StartCoroutine(FadeOutAndDestroy());
     }
 
     private IEnumerator FadeOutAndDestroy()
     {
-        // collect all SpriteRenderers under this GameObject
         var renderers = GetComponentsInChildren<SpriteRenderer>();
         float timer = 0f;
-
-        // cache original colors
-        Color[][] originals = new Color[renderers.Length][];
-        for (int i = 0; i < renderers.Length; i++)
-            originals[i] = new Color[] { renderers[i].color };
 
         while (timer < fadeOutDuration)
         {
             timer += Time.deltaTime;
             float alpha = Mathf.Lerp(1f, 0f, timer / fadeOutDuration);
-            for (int i = 0; i < renderers.Length; i++)
+            foreach (var sr in renderers)
             {
-                Color c = renderers[i].color;
+                Color c = sr.color;
                 c.a = alpha;
-                renderers[i].color = c;
+                sr.color = c;
             }
             yield return null;
         }
 
-        // ensure fully transparent
+        // Pastikan benar-benar transparan
         foreach (var sr in renderers)
         {
-            var c = sr.color;
+            Color c = sr.color;
             c.a = 0f;
             sr.color = c;
         }
 
-        // destroy or disable
         if (destroyAfterFade)
             Destroy(gameObject);
         else
