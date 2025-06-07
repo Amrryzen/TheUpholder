@@ -55,4 +55,16 @@ public class Apps : MonoBehaviour
         float c3 = c1 + 1;
         return 1 + c3 * Mathf.Pow(t - 1, 3) + c1 * Mathf.Pow(t - 1, 2);
     }
+
+    public void ExitGame()
+    {
+#if UNITY_EDITOR
+        // Jika sedang di editor Unity
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+    // Jika sudah di-build (standalone/mobile)
+    Application.Quit();
+#endif
+    }
+
 }
