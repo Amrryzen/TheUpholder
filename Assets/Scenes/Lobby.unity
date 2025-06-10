@@ -1858,7 +1858,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1070598835, guid: b8924f85d1de05f48ae4cf24aa998845, type: 3}
+  m_Sprite: {fileID: 40536950, guid: b81604b1772b2244eb98d0487a8edd31, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2536,6 +2536,7 @@ MonoBehaviour:
   mode2LockedOverlay: {fileID: 401111825}
   sceneMode1: Hall
   sceneMode2: Street
+  forceDebugMode: 1
 --- !u!4 &802584796
 Transform:
   m_ObjectHideFlags: 0

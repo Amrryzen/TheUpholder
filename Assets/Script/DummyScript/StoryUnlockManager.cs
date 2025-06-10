@@ -9,10 +9,11 @@ public class StoryUnlockManager : MonoBehaviour
     public string finalQuest1Id = "QuestA_Final";
 
     [Header("UI Fade Image (tanpa CanvasGroup)")]
-    public Image fadeImage; // Drag Image UI ke sini dari Inspector
+    public Image fadeImage; // Assign dari Inspector
 
     private void Start()
     {
+        // Daftarkan listener ke quest selesai
         if (QuestManager2.Instance != null)
         {
             QuestManager2.Instance.OnQuestCompleted.AddListener(OnQuestCompleted);
@@ -33,7 +34,7 @@ public class StoryUnlockManager : MonoBehaviour
     {
         if (q.questId == finalQuest1Id)
         {
-            Debug.Log($"[StoryUnlockManager] Quest terakhir Mode 1 ({finalQuest1Id}) selesai. Men‐set Mode1Completed = 1 (unlock Mode 2).");
+            Debug.Log($"[StoryUnlockManager] Quest terakhir Mode 1 ({finalQuest1Id}) selesai. Unlock Mode 2.");
             PlayerPrefs.SetInt("Mode1Completed", 1);
             PlayerPrefs.Save();
         }
@@ -47,20 +48,14 @@ public class StoryUnlockManager : MonoBehaviour
 
     private IEnumerator LoadSceneWithFade(string sceneName)
     {
-        yield return new WaitForSeconds(3f); // Delay sebelum fade
+        yield return new WaitForSeconds(3f);
 
         if (fadeImage != null)
         {
             fadeImage.gameObject.SetActive(true);
-
-            // Fade in (alpha 0 → 1)
             yield return StartCoroutine(FadeImage(0f, 1f, 1f));
-
-            yield return new WaitForSeconds(1f); // Tunggu sebentar
-
-            // Fade out (alpha 1 → 0)
+            yield return new WaitForSeconds(1f);
             yield return StartCoroutine(FadeImage(1f, 0f, 1f));
-
             fadeImage.gameObject.SetActive(false);
         }
 

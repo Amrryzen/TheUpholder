@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class EnemyStateChase : EnemyState
 {
-    public EnemyStateChase(Enemy enemy, EnemyStateMachine stateMachine) 
+    public EnemyStateChase(Enemy enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
 
     public override void Enter()
