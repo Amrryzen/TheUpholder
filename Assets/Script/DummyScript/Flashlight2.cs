@@ -9,7 +9,8 @@ public class Flashlight2 : MonoBehaviour
     private bool isOn = false;
 
     [Header("Offset Settings")]
-    public float distanceFromPlayer = 0.3f; // jarak senter dari pusat player
+    public float distanceFromPlayer = 0.06f; // jarak senter dari pusat player
+    public Vector2 offset = Vector2.zero; // Tambahkan offset tambahan jika diperlukan
 
     private Vector2 lastDirection = Vector2.right;
 
@@ -50,8 +51,9 @@ public class Flashlight2 : MonoBehaviour
         if (flashlightObject == null)
             return;
 
-        // 2) Geser child flashlightObject, bukan this.transform!
-        flashlightObject.transform.localPosition = (Vector3)(lastDirection * distanceFromPlayer);
+        // 2) Geser child flashlightObject dengan memperhitungkan offset
+        Vector2 baseOffset = lastDirection * distanceFromPlayer;
+        flashlightObject.transform.localPosition = (Vector3)(baseOffset + offset);
 
         // 3) Putar child agar beam menghadap arah yang benar
         float angle = Mathf.Atan2(lastDirection.y, lastDirection.x) * Mathf.Rad2Deg;
