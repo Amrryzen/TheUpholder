@@ -344,8 +344,6 @@ MonoBehaviour:
   maxBattery: 100
   batteryDrainRate: 5
   rechargeDelay: 3
-  flashlightAudioSource: {fileID: 69074708}
-  flashlightToggleSound: {fileID: 8300000, guid: 42af2ef9837c53b4297b33304d41401e, type: 3}
   enemyTags:
   - Narkoba
   - Sexual
@@ -30392,7 +30390,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -0.1161, y: -0.11607}
-  m_SizeDelta: {x: 720, y: 360}
+  m_SizeDelta: {x: 320.2556, y: 160.1278}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1601488704
 CanvasGroup:
@@ -37056,6 +37054,9 @@ MonoBehaviour:
   flashlightObject: {fileID: 1885805177}
   distanceFromPlayer: 0
   offset: {x: 0, y: -0.18}
+  audioSource: {fileID: 69074708}
+  flashlightOnClip: {fileID: 8300000, guid: 42af2ef9837c53b4297b33304d41401e, type: 3}
+  flashlightOffClip: {fileID: 8300000, guid: 42af2ef9837c53b4297b33304d41401e, type: 3}
 --- !u!1 &1908760733
 GameObject:
   m_ObjectHideFlags: 0
@@ -38087,6 +38088,7 @@ MonoBehaviour:
   fadeOutDuration: 1
   destroyAfterFade: 1
   menuSceneName: Lobby
+  questCompletePanel: {fileID: 0}
 --- !u!95 &2052592740
 Animator:
   serializedVersion: 5
@@ -38301,8 +38303,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.06530762, y: 90.660645}
-  m_SizeDelta: {x: 741.40356, y: 560.30554}
+  m_AnchoredPosition: {x: -0.03540039, y: 40.2614}
+  m_SizeDelta: {x: 274.2559, y: 193.7036}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2144633637
 MonoBehaviour:

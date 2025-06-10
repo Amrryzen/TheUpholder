@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.Rendering.Universal; // Jika masih pakai Light2D
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 
 public class NPCQuestGiver : MonoBehaviour, Interacable
@@ -30,15 +30,17 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
     public float delayBetweenLines = 1f;
 
     [Header("Fade Out After Completion")]
-    public float fadeOutDuration = 1f; // durasi fade
+    public float fadeOutDuration = 1f;
     public bool destroyAfterFade = true;
 
     [Header("Nama Scene Menu Pilih Mode (untuk Unlock)")]
     public string menuSceneName = "StorySelectScene";
 
+    [Header("Panel Saat Quest Selesai")]
+    public GameObject questCompletePanel;
+
     private bool hasGivenQuest = false;
     private bool isTyping = false;
-
     private StoryUnlockManager unlockManager;
 
     private void Awake()
@@ -49,7 +51,6 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
 
     private void Start()
     {
-        // Cari instance StoryUnlockManager di scene
         unlockManager = FindObjectOfType<StoryUnlockManager>();
         if (unlockManager == null)
             Debug.LogWarning("NPCQuestGiver: tidak menemukan StoryUnlockManager di scene!");
@@ -57,6 +58,7 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
         if (dialogPanel != null) dialogPanel.SetActive(false);
         if (nextPanel != null) nextPanel.SetActive(false);
         if (rewardImage != null) rewardImage.SetActive(false);
+        if (questCompletePanel != null) questCompletePanel.SetActive(false);
     }
 
     public bool canInteract() => true;
@@ -67,11 +69,12 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
 
         if (!hasGivenQuest)
         {
-            // Beri quest
+            // Beri quest + dialog
             StartCoroutine(PlayDialogSequence(introDialogLines, () =>
             {
                 QuestManager2.Instance.ActivateQuest(questDef);
                 hasGivenQuest = true;
+
                 foreach (var obj in collectiblesToActivate)
                 {
                     if (obj != null)
@@ -83,29 +86,37 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
         }
         else
         {
-            // Cek completion
+            // Cek apakah quest selesai
             Quest q = QuestManager2.Instance.GetActiveQuest(questDef.questId);
             if (q != null && q.isCompleted)
             {
                 StartCoroutine(PlayDialogSequence(postCompletionDialogLines, () =>
                 {
-                    // 1) Invoke event OnQuestCompleted
+                    // Mark quest selesai
                     QuestManager2.Instance.OnQuestCompleted.Invoke(q);
 
-                    // 2) Setelah panel dialog post‐completion selesai, panggil LoadMenu
+                    // Tampilkan panel quest selesai
+                    ShowQuestCompletePanel();
+
+                    // Pindah scene jika diatur
                     if (unlockManager != null)
                         unlockManager.LoadMenuScene(menuSceneName);
 
-                    // 3) Tampilkan reward, lalu fade out NPC
+                    // Efek reward dan fade
                     StartCoroutine(ShowRewardAndFadeOut());
                 }));
             }
         }
     }
 
+    private void ShowQuestCompletePanel()
+    {
+        if (questCompletePanel != null)
+            questCompletePanel.SetActive(true);
+    }
+
     private IEnumerator ShowRewardAndFadeOut()
     {
-        // 1) tampilkan reward image
         if (rewardImage != null)
         {
             rewardImage.SetActive(true);
@@ -114,7 +125,7 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
             yield return new WaitForSecondsRealtime(delayBetweenLines);
             rewardImage.SetActive(false);
         }
-        // 2) fade out
+
         yield return StartCoroutine(FadeOutAndDestroy());
     }
 
@@ -136,7 +147,6 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
             yield return null;
         }
 
-        // Pastikan benar-benar transparan
         foreach (var sr in renderers)
         {
             Color c = sr.color;
@@ -153,10 +163,12 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
     private IEnumerator PlayDialogSequence(string[] lines, Action onComplete)
     {
         isTyping = true;
+
         if (dialogSFX != null && audioSource != null)
             audioSource.PlayOneShot(dialogSFX);
 
         dialogPanel.SetActive(true);
+
         foreach (var line in lines)
         {
             dialogText.text = "";
@@ -167,6 +179,7 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
             }
             yield return new WaitForSecondsRealtime(delayBetweenLines);
         }
+
         dialogPanel.SetActive(false);
         isTyping = false;
         onComplete?.Invoke();

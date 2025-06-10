@@ -26,8 +26,8 @@ public class ModeManager : MonoBehaviour
 
     private void Start()
     {
-        // ❗ UNCOMMENT SATU KALI BUAT RESET TES DARI AWAL
-        PlayerPrefs.DeleteKey("Mode1Completed");
+        // ❗ UNCOMMENT SATU KALI SAJA JIKA INGIN RESET PROGRESS
+        // PlayerPrefs.DeleteKey("Mode1Completed");
         // PlayerPrefs.Save();
 
         CheckMode2Availability();
@@ -36,21 +36,17 @@ public class ModeManager : MonoBehaviour
 
     private void CheckMode2Availability()
     {
-        // Ambil data dari PlayerPrefs dengan lebih detail debug
         int mode1Completed = PlayerPrefs.GetInt("Mode1Completed", 0);
-        
-        // Debug lebih detail
+
         Debug.Log($"[ModeManager] === DEBUG INFO ===");
         Debug.Log($"[ModeManager] PlayerPrefs 'Mode1Completed' = {mode1Completed}");
         Debug.Log($"[ModeManager] HasKey 'Mode1Completed' = {PlayerPrefs.HasKey("Mode1Completed")}");
         Debug.Log($"[ModeManager] ForceDebugMode = {forceDebugMode}");
-        
-        // Logika unlock Mode 2
+
         bool isMode2Unlocked = (mode1Completed == 1) || forceDebugMode;
-        
+
         Debug.Log($"[ModeManager] Mode 2 Unlocked = {isMode2Unlocked}");
 
-        // Atur tombol mode 2
         if (mode2Button != null)
         {
             mode2Button.interactable = isMode2Unlocked;
@@ -61,7 +57,6 @@ public class ModeManager : MonoBehaviour
             Debug.LogWarning("[ModeManager] mode2Button belum di-assign di Inspector!");
         }
 
-        // Atur overlay kunci mode 2
         if (mode2LockedOverlay != null)
         {
             mode2LockedOverlay.SetActive(!isMode2Unlocked);
@@ -75,13 +70,11 @@ public class ModeManager : MonoBehaviour
 
     private void InitializeUI()
     {
-        // Nonaktifkan tombol start
         if (startButton != null)
         {
             startButton.interactable = false;
         }
 
-        // Nonaktifkan highlight di awal
         if (mode1Highlight != null) mode1Highlight.SetActive(false);
         if (mode2Highlight != null) mode2Highlight.SetActive(false);
     }
@@ -99,10 +92,9 @@ public class ModeManager : MonoBehaviour
 
     public void SelectMode2()
     {
-        // Double check apakah Mode 2 benar-benar unlocked
         int mode1Completed = PlayerPrefs.GetInt("Mode1Completed", 0);
         bool isMode2Unlocked = (mode1Completed == 1) || forceDebugMode;
-        
+
         if (!isMode2Unlocked)
         {
             Debug.LogWarning($"[ModeManager] Mode 2 masih terkunci! Mode1Completed = {mode1Completed}");
@@ -136,19 +128,17 @@ public class ModeManager : MonoBehaviour
         PlayerPrefs.DeleteKey("Mode1Completed");
         PlayerPrefs.Save();
         Debug.Log("[ModeManager] Progress Mode 1 berhasil di-reset (Mode1Completed dihapus).");
-        
-        // Refresh UI setelah reset
+
         CheckMode2Availability();
     }
 
-    // Method untuk debugging manual
+    // Untuk testing dari Inspector
     [ContextMenu("Force Check Mode2")]
     public void ForceCheckMode2()
     {
         CheckMode2Availability();
     }
 
-    // Method untuk testing
     [ContextMenu("Simulate Mode1 Complete")]
     public void SimulateMode1Complete()
     {

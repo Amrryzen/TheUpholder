@@ -344,12 +344,7 @@ MonoBehaviour:
   maxBattery: 100
   batteryDrainRate: 5
   rechargeDelay: 3
-  flashlightAudioSource: {fileID: 1216507547}
-  flashlightToggleSound: {fileID: 8300000, guid: 49f34ed6a202c8349a00943646e77fc7, type: 3}
-  enemyTags:
-  - Narkoba
-  - Pembully
-  - Sexual
+  enemyTags: []
   collectibleTags:
   - Ganja
   - Sabu
@@ -38931,6 +38926,9 @@ MonoBehaviour:
   flashlightObject: {fileID: 1885805177}
   distanceFromPlayer: 0
   offset: {x: 0, y: -0.18}
+  audioSource: {fileID: 1216507547}
+  flashlightOnClip: {fileID: 8300000, guid: 42af2ef9837c53b4297b33304d41401e, type: 3}
+  flashlightOffClip: {fileID: 8300000, guid: 42af2ef9837c53b4297b33304d41401e, type: 3}
 --- !u!1 &1918977507
 GameObject:
   m_ObjectHideFlags: 0
@@ -39815,6 +39813,7 @@ MonoBehaviour:
   fadeOutDuration: 1
   destroyAfterFade: 1
   menuSceneName: 
+  questCompletePanel: {fileID: 1482761842}
 --- !u!95 &2052592740
 Animator:
   serializedVersion: 5
