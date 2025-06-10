@@ -2536,7 +2536,7 @@ MonoBehaviour:
   mode2LockedOverlay: {fileID: 401111825}
   sceneMode1: Hall
   sceneMode2: Street
-  forceDebugMode: 1
+  forceDebugMode: 0
 --- !u!4 &802584796
 Transform:
   m_ObjectHideFlags: 0

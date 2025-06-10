@@ -27,7 +27,7 @@ public class ModeManager : MonoBehaviour
     private void Start()
     {
         // ❗ UNCOMMENT SATU KALI BUAT RESET TES DARI AWAL
-        // PlayerPrefs.DeleteKey("Mode1Completed");
+        PlayerPrefs.DeleteKey("Mode1Completed");
         // PlayerPrefs.Save();
 
         CheckMode2Availability();

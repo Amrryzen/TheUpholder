@@ -43,8 +43,6 @@ public class PlayerController2 : MonoBehaviour
     public float maxBattery = 100f;
     public float batteryDrainRate = 5f;
     public float rechargeDelay = 3f;
-    [SerializeField] private AudioSource flashlightAudioSource;
-    [SerializeField] private AudioClip flashlightToggleSound;
 
     [Header("Enemy Tags")]
     public string[] enemyTags;
@@ -247,42 +245,20 @@ public class PlayerController2 : MonoBehaviour
     private void HandleFlashlight()
     {
         if (Input.GetKeyDown(KeyCode.E) && flashlight != null && currentBattery > 0f)
+            flashlight.Toggle(!flashlight.IsOn());
+
+        if (flashlight != null && flashlight.IsOn())
         {
-            bool newState = !flashlight.IsOn();
-            flashlight.Toggle(newState);
+            currentBattery = Mathf.Max(0f, currentBattery - batteryDrainRate * Time.deltaTime);
+            UpdateBatteryUI();
 
-            // Play the appropriate sound
-            if (flashlightAudioSource != null)
+            if (currentBattery <= 0f && !isRecharging)
             {
-                flashlightAudioSource.pitch = newState ? 1.0f : 0.9f;
+                flashlight.Toggle(false);
+                StartCoroutine(RechargeBattery());
             }
-
-            if (flashlight != null && flashlight.IsOn())
-            {
-                currentBattery = Mathf.Max(0f, currentBattery - batteryDrainRate * Time.deltaTime);
-                UpdateBatteryUI();
-
-                if (currentBattery <= 0f && !isRecharging)
-                {
-                    flashlight.Toggle(false);
-
-                    // Play the "off" sound when battery dies
-                    if (flashlightAudioSource != null && flashlightToggleSound != null)
-                    {
-                        flashlightAudioSource.PlayOneShot(flashlightToggleSound);
-                    }
-
-                    StartCoroutine(RechargeBattery());
-                }
-
-            }
-
-
         }
     }
-
-
-
 
     private IEnumerator RechargeBattery()
     {
