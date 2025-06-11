@@ -342,7 +342,7 @@ MonoBehaviour:
   flashlight: {fileID: 1885805181}
   batteryImage: {fileID: 1870107879}
   maxBattery: 100
-  batteryDrainRate: 5
+  batteryDrainRate: 10
   rechargeDelay: 3
   enemyTags:
   - Narkoba
@@ -36569,7 +36569,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0.05
+  m_Intensity: 0.01
   m_LightVolumeIntensity: 1
   m_LightVolumeIntensityEnabled: 0
   m_ApplyToSortingLayers: 0000000069e43640d92e8d77
@@ -38088,7 +38088,7 @@ MonoBehaviour:
   fadeOutDuration: 1
   destroyAfterFade: 1
   menuSceneName: Lobby
-  questCompletePanel: {fileID: 0}
+  spriteToActivateOnCompletion: {fileID: 0}
 --- !u!95 &2052592740
 Animator:
   serializedVersion: 5

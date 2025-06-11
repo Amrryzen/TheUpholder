@@ -15068,7 +15068,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!61 &911842279
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -27527,7 +27527,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0.005
+  m_Intensity: 0.002
   m_LightVolumeIntensity: 1
   m_LightVolumeIntensityEnabled: 0
   m_ApplyToSortingLayers: 0000000069e43640d92e8d77
@@ -28437,7 +28437,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 5851714}
-  smoothSpeed: 2
+  smoothSpeed: 6
   offset: {x: 0, y: 0, z: 0}
 --- !u!1 &2009188745
 GameObject:
@@ -28931,7 +28931,7 @@ MonoBehaviour:
   fadeOutDuration: 1
   destroyAfterFade: 1
   menuSceneName: 
-  questCompletePanel: {fileID: 0}
+  spriteToActivateOnCompletion: {fileID: 911842277}
 --- !u!95 &2052592740
 Animator:
   serializedVersion: 5

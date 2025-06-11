@@ -3,8 +3,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.Rendering.Universal;
-using UnityEngine.SceneManagement;
 
 public class NPCQuestGiver : MonoBehaviour, Interacable
 {
@@ -36,8 +34,8 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
     [Header("Nama Scene Menu Pilih Mode (untuk Unlock)")]
     public string menuSceneName = "StorySelectScene";
 
-    [Header("Panel Saat Quest Selesai")]
-    public GameObject questCompletePanel;
+    [Header("Sprite yang Diaktifkan Saat Quest Selesai")]
+    public GameObject spriteToActivateOnCompletion;
 
     private bool hasGivenQuest = false;
     private bool isTyping = false;
@@ -58,7 +56,7 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
         if (dialogPanel != null) dialogPanel.SetActive(false);
         if (nextPanel != null) nextPanel.SetActive(false);
         if (rewardImage != null) rewardImage.SetActive(false);
-        if (questCompletePanel != null) questCompletePanel.SetActive(false);
+        if (spriteToActivateOnCompletion != null) spriteToActivateOnCompletion.SetActive(false);
     }
 
     public bool canInteract() => true;
@@ -92,28 +90,23 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
             {
                 StartCoroutine(PlayDialogSequence(postCompletionDialogLines, () =>
                 {
-                    // Mark quest selesai
+                    // Trigger quest complete event
                     QuestManager2.Instance.OnQuestCompleted.Invoke(q);
 
-                    // Tampilkan panel quest selesai
-                    ShowQuestCompletePanel();
-
-                    // Pindah scene jika diatur
+                    // Pindah scene jika ada
                     if (unlockManager != null)
                         unlockManager.LoadMenuScene(menuSceneName);
 
-                    // Efek reward dan fade
+                    // Tampilkan reward & efek fade
                     StartCoroutine(ShowRewardAndFadeOut());
+
+                    // Hapus quest setelah semua proses
+                    QuestManager2.Instance.RemoveQuest(questDef.questId);
                 }));
             }
         }
     }
 
-    private void ShowQuestCompletePanel()
-    {
-        if (questCompletePanel != null)
-            questCompletePanel.SetActive(true);
-    }
 
     private IEnumerator ShowRewardAndFadeOut()
     {
@@ -125,6 +118,10 @@ public class NPCQuestGiver : MonoBehaviour, Interacable
             yield return new WaitForSecondsRealtime(delayBetweenLines);
             rewardImage.SetActive(false);
         }
+
+        // ✅ Aktifkan sprite 2D target jika ada
+        if (spriteToActivateOnCompletion != null)
+            spriteToActivateOnCompletion.SetActive(true);
 
         yield return StartCoroutine(FadeOutAndDestroy());
     }

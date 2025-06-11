@@ -60,6 +60,15 @@ public class QuestManager2 : MonoBehaviour
         }
     }
 
+    public void RemoveQuest(string questId)
+    {
+        if (activeQuests.ContainsKey(questId))
+        {
+            activeQuests.Remove(questId);
+            Debug.Log($"Quest removed: {questId}");
+        }
+    }
+
     public bool HasActivePhotoQuest()
     {
         return activeQuests.Values.Any(q => q.HasQuestType(QuestType.Photograph) && !q.isCompleted);
